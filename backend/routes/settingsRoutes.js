@@ -2,10 +2,8 @@ const express = require('express');
 const router = express.Router();
 const settingsController = require('../controllers/settingsController');
 const multer = require('multer');
-const path = require('path');
 
-// Configure Multer
-// Configure Multer
+// Use Memory Storage for multer when uploading to Supabase
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 

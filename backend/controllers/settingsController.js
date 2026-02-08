@@ -1,8 +1,6 @@
-const fs = require('fs');
-const path = require('path');
 const Settings = require('../models/Settings');
+const supabase = require('../utils/supabase');
 
-// Get or Create Settings
 exports.getSettings = async (req, res) => {
     try {
         let settings = await Settings.findOne();
@@ -16,7 +14,6 @@ exports.getSettings = async (req, res) => {
     }
 };
 
-// Update Settings (Text Fields)
 exports.updateSettings = async (req, res) => {
     try {
         const { companyName, companyAddress, companyTaxId, prefix, nextInvoiceNumber } = req.body;
@@ -36,48 +33,45 @@ exports.updateSettings = async (req, res) => {
     }
 };
 
-// Upload Logo (Base64 for Serverless)
 exports.uploadLogo = async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ error: 'No file uploaded' });
-        }
+        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+        const fileName = `logos/logo-${Date.now()}${require('path').extname(req.file.originalname)}`;
+
+        const { data, error } = await supabase.storage
+            .from('invoice-assets')
+            .upload(fileName, req.file.buffer, {
+                contentType: req.file.mimetype,
+                upsert: true
+            });
+
+        if (error) throw error;
 
         let settings = await Settings.findOne();
         if (!settings) settings = new Settings();
-
-        // Convert buffer to base64
-        const fileBase64 = req.file.buffer.toString('base64');
-        const fileMimeType = req.file.mimetype;
-
-        settings.logoBase64 = fileBase64;
-        settings.logoMimeType = fileMimeType;
-        settings.logoPath = ''; // clear legacy path
-
+        settings.logoPath = fileName;
         await settings.save();
 
-        res.json({ success: true });
+        res.json({ logoPath: fileName });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Failed to upload logo' });
+        res.status(500).json({ error: 'Failed to upload logo to Supabase' });
     }
 };
 
-// Serve Logo from DB
 exports.getLogo = async (req, res) => {
     try {
         let settings = await Settings.findOne();
-        // Fallback or check legacy path if needed (skipping legacy path for now as Vercel effectively deleted it)
-        if (!settings || !settings.logoBase64) {
-            return res.status(404).send('Logo not found');
-        }
+        if (!settings || !settings.logoPath) return res.status(404).send('Logo not found');
 
-        const imgBuffer = Buffer.from(settings.logoBase64, 'base64');
-        res.setHeader('Content-Type', settings.logoMimeType || 'image/png');
-        res.send(imgBuffer);
+        const { data, error } = await supabase.storage
+            .from('invoice-assets')
+            .createSignedUrl(settings.logoPath, 60);
 
+        if (error) throw error;
+        res.redirect(data.signedUrl);
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Error serving logo');
+        res.status(500).send('Error fetching logo');
     }
 };

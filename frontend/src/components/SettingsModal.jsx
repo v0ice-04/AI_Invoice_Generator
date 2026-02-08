@@ -77,9 +77,7 @@ const SettingsModal = ({ open, onClose }) => {
                                     src={
                                         logoFile
                                             ? URL.createObjectURL(logoFile)
-                                            : settings.logoBase64
-                                                ? `data:${settings.logoMimeType};base64,${settings.logoBase64}`
-                                                : `${BASE_URL}/uploads/${settings.logoPath.split('/').pop()}`
+                                            : `${BASE_URL}/api/settings/logo?t=${Date.now()}` // Use redirecting endpoint with cache buster
                                     }
                                     alt="Logo Preview"
                                     className="h-12 w-auto object-contain border rounded p-1 dark:bg-slate-200"
