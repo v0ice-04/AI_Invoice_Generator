@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Save, Upload, X } from 'lucide-react';
-import { getSettings, updateSettings, uploadLogo } from '../services/api';
+import { getSettings, updateSettings, uploadLogo, BASE_URL } from '../services/api';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const SettingsModal = ({ open, onClose }) => {
@@ -74,7 +74,7 @@ const SettingsModal = ({ open, onClose }) => {
                         <div className="flex items-center gap-4">
                             {(settings.logoPath || logoFile) && (
                                 <img
-                                    src={logoFile ? URL.createObjectURL(logoFile) : `http://localhost:5000/uploads/${settings.logoPath.split('/').pop()}`} // Simple serve
+                                    src={logoFile ? URL.createObjectURL(logoFile) : `${BASE_URL}/uploads/${settings.logoPath.split('/').pop()}`} // Simple serve
                                     alt="Logo Preview"
                                     className="h-12 w-auto object-contain border rounded p-1 dark:bg-slate-200"
                                 />

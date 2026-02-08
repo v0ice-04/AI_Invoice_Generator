@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/invoice';
-const SETTINGS_URL = 'http://localhost:5000/api/settings';
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_URL = `${BASE_URL}/api/invoice`;
+const SETTINGS_URL = `${BASE_URL}/api/settings`;
 
 export const generateInvoice = async (data) => {
     // data includes prompt, clientAddress, paymentMethod
