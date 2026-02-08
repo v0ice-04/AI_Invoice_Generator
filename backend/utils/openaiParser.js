@@ -3,7 +3,12 @@ require('dotenv').config();
 
 const parsePrompt = async (prompt) => {
     try {
-        const apiKey = process.env.OPENAI_API_KEY;
+        let apiKey = process.env.OPENAI_API_KEY;
+
+        // Support for indirect key reference (e.g. OPENAI_API_KEY=KEY -> process.env.KEY)
+        if (apiKey === 'KEY' && process.env.KEY) {
+            apiKey = process.env.KEY;
+        }
 
         if (!apiKey || apiKey === 'your_openai_api_key_here' || apiKey === 'KEY') {
             console.warn("OpenAI API Key missing or invalid. Using mock data.");
