@@ -46,9 +46,13 @@ if (process.env.DB_PASSWORD) {
   MONGO_URI = MONGO_URI.replace('<db_password>', encodeURIComponent(process.env.DB_PASSWORD));
 }
 
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.log('MongoDB connection error:', err));
+mongoose.connect(MONGO_URI, {
+  serverSelectionTimeoutMS: 5000 // Give up after 5 seconds instead of 10
+})
+  .then(() => console.log('✅ MongoDB connected successfully'))
+  .catch((err) => {
+    console.error('❌ MongoDB connection error:', err.message);
+  });
 
 if (require.main === module) {
   app.listen(PORT, () => {
