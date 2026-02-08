@@ -2,18 +2,13 @@ const PDFDocument = require('pdfkit');
 const Settings = require('../models/Settings');
 const supabase = require('./supabase');
 
-const generateInvoicePDF = async (invoice, outputStream) => {
+const populateInvoicePDF = async (doc, invoice) => {
     const settings = await Settings.findOne() || new Settings();
-
-    const doc = new PDFDocument({ margin: 50 });
-    doc.pipe(outputStream);
-
     let yPosition = 50;
 
     // 1. Logo (Fetched from Supabase if exists)
     if (settings.logoPath) {
         try {
-            // For PDFKit, it's easier to download the image to a buffer first if it's external
             const { data, error } = await supabase.storage.from('invoice-assets').download(settings.logoPath);
             if (data && !error) {
                 const buffer = Buffer.from(await data.arrayBuffer());
@@ -27,8 +22,8 @@ const generateInvoicePDF = async (invoice, outputStream) => {
 
     doc.moveDown();
     const companyInfoTop = yPosition + 50;
-    doc.font('Helvetica-Bold').fontSize(10).text(settings.companyName, 300, companyInfoTop, { align: 'right' });
-    doc.font('Helvetica').text(settings.companyAddress, 300, companyInfoTop + 15, { align: 'right' });
+    doc.font('Helvetica-Bold').fontSize(10).text(settings.companyName || 'Company Name', 300, companyInfoTop, { align: 'right' });
+    doc.font('Helvetica').text(settings.companyAddress || 'Company Address', 300, companyInfoTop + 15, { align: 'right' });
     if (settings.companyTaxId) {
         doc.text(`Tax ID: ${settings.companyTaxId}`, 300, companyInfoTop + 30, { align: 'right' });
     }
@@ -81,34 +76,45 @@ const generateInvoicePDF = async (invoice, outputStream) => {
     doc.text(`Payment Method:`, 60, footerTop - 40);
     doc.font('Helvetica-Bold').text(invoice.paymentMethod || 'Net Banking', 60, footerTop - 25);
     doc.text('Thank you for your business!', 50, footerTop + 20, { align: 'center', width: 500 });
+};
 
+const generateInvoicePDF = async (invoice, outputStream) => {
+    const doc = new PDFDocument({ margin: 50 });
+    doc.pipe(outputStream);
+    await populateInvoicePDF(doc, invoice);
     doc.end();
 };
 
 const saveInvoiceToSupabase = async (invoice) => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         const doc = new PDFDocument({ margin: 50 });
         const buffers = [];
         doc.on('data', buffers.push.bind(buffers));
         doc.on('end', async () => {
-            const pdfBuffer = Buffer.concat(buffers);
-            const fileName = `invoices/invoice-${invoice.invoiceNumber}.pdf`;
+            try {
+                const pdfBuffer = Buffer.concat(buffers);
+                const fileName = `invoices/invoice-${invoice.invoiceNumber}.pdf`;
 
-            const { data, error } = await supabase.storage
-                .from('invoice-assets')
-                .upload(fileName, pdfBuffer, {
-                    contentType: 'application/pdf',
-                    upsert: true
-                });
+                const { data, error } = await supabase.storage
+                    .from('invoice-assets')
+                    .upload(fileName, pdfBuffer, {
+                        contentType: 'application/pdf',
+                        upsert: true
+                    });
 
-            if (error) reject(error);
-            else resolve(fileName);
+                if (error) reject(error);
+                else resolve(fileName);
+            } catch (err) {
+                reject(err);
+            }
         });
 
-        // We need the full generation logic here or refactor it to accept any stream
-        // For now, let's just trigger the main generation logic with a custom stream or manual call
-        // Re-injecting common logic for brevity or we should pass buffers to generateInvoicePDF
-        generateInvoicePDF(invoice, doc).catch(reject);
+        try {
+            await populateInvoicePDF(doc, invoice);
+            doc.end();
+        } catch (err) {
+            reject(err);
+        }
     });
 };
 
