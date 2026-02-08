@@ -38,23 +38,49 @@ app.get('/', (req, res) => {
 app.use('/api/invoice', invoiceRoutes);
 app.use('/api/settings', settingsRoutes); // Added
 
-// Database Connection
-const PORT = process.env.PORT || 5000;
-let MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ai-invoice-app';
+// Database Connection optimized for Serverless
+let cachedConnection = null;
 
-if (process.env.DB_PASSWORD) {
-  MONGO_URI = MONGO_URI.replace('<db_password>', encodeURIComponent(process.env.DB_PASSWORD));
-}
+const connectDB = async () => {
+  if (cachedConnection) return cachedConnection;
 
-mongoose.connect(MONGO_URI, {
-  serverSelectionTimeoutMS: 5000 // Give up after 5 seconds instead of 10
-})
-  .then(() => console.log('✅ MongoDB connected successfully'))
-  .catch((err) => {
+  try {
+    const PORT = process.env.PORT || 5000;
+    let MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ai-invoice-app';
+
+    if (process.env.DB_PASSWORD) {
+      MONGO_URI = MONGO_URI.replace('<db_password>', encodeURIComponent(process.env.DB_PASSWORD));
+    }
+
+    // Disable buffering - fail fast instead of hanging
+    mongoose.set('bufferCommands', false);
+
+    const conn = await mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+
+    console.log('✅ MongoDB connected successfully');
+    cachedConnection = conn;
+    return conn;
+  } catch (err) {
     console.error('❌ MongoDB connection error:', err.message);
-  });
+    throw err;
+  }
+};
+
+// Middleware to ensure DB is connected before any request
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+});
 
 if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
