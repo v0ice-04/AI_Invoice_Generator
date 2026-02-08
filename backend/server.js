@@ -22,14 +22,20 @@ app.use('/api/settings', settingsRoutes); // Added
 
 // Database Connection
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ai-invoice-app';
+let MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ai-invoice-app';
+
+if (process.env.DB_PASSWORD) {
+  MONGO_URI = MONGO_URI.replace('<db_password>', process.env.DB_PASSWORD);
+}
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.log('MongoDB connection error:', err));
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
 
 module.exports = app;

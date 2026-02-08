@@ -72,9 +72,15 @@ const SettingsModal = ({ open, onClose }) => {
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Company Logo</label>
                         <div className="flex items-center gap-4">
-                            {(settings.logoPath || logoFile) && (
+                            {(settings.logoBase64 || settings.logoPath || logoFile) && (
                                 <img
-                                    src={logoFile ? URL.createObjectURL(logoFile) : `${BASE_URL}/uploads/${settings.logoPath.split('/').pop()}`} // Simple serve
+                                    src={
+                                        logoFile
+                                            ? URL.createObjectURL(logoFile)
+                                            : settings.logoBase64
+                                                ? `data:${settings.logoMimeType};base64,${settings.logoBase64}`
+                                                : `${BASE_URL}/uploads/${settings.logoPath.split('/').pop()}`
+                                    }
                                     alt="Logo Preview"
                                     className="h-12 w-auto object-contain border rounded p-1 dark:bg-slate-200"
                                 />

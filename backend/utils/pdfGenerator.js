@@ -15,7 +15,15 @@ const generateInvoicePDF = async (invoice, outputStream) => {
     let yPosition = 50;
 
     // 1. Logo (Top Left)
-    if (settings.logoPath) {
+    // 1. Logo (Top Left)
+    if (settings.logoBase64) {
+        try {
+            const logoBuffer = Buffer.from(settings.logoBase64, 'base64');
+            doc.image(logoBuffer, 50, yPosition, { width: 100 });
+        } catch (err) {
+            console.error("Error embedding base64 logo:", err);
+        }
+    } else if (settings.logoPath) {
         const logoPath = path.join(__dirname, '..', settings.logoPath);
         if (fs.existsSync(logoPath)) {
             doc.image(logoPath, 50, yPosition, { width: 100 }); // Adjust width/height as needed

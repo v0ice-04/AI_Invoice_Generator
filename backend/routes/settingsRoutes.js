@@ -5,16 +5,8 @@ const multer = require('multer');
 const path = require('path');
 
 // Configure Multer
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/');
-    },
-    filename: (req, file, cb) => {
-        // Keep original extension, rename to 'logo' + timestamp to avoid cache issues or collisions
-        const ext = path.extname(file.originalname);
-        cb(null, 'logo-' + Date.now() + ext);
-    }
-});
+// Configure Multer
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 router.get('/', settingsController.getSettings);

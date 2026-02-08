@@ -61,7 +61,7 @@ exports.generateInvoice = async (req, res) => {
         try {
             await saveInvoiceToDisk(newInvoice);
         } catch (pdfError) {
-            console.error("Failed to save PDF to disk:", pdfError);
+            console.warn("Failed to save PDF to disk (expected on Vercel/Serverless):", pdfError.message);
         }
 
         res.status(201).json(newInvoice);

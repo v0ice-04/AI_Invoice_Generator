@@ -2,12 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const Settings = require('../models/Settings');
 
-// Ensure uploads directory exists
-const uploadDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
 // Get or Create Settings
 exports.getSettings = async (req, res) => {
     try {
@@ -16,7 +10,6 @@ exports.getSettings = async (req, res) => {
             settings = new Settings();
             await settings.save();
         }
-        // Normalize logo path for frontend serving if necessary
         res.json(settings);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch settings' });
@@ -43,7 +36,7 @@ exports.updateSettings = async (req, res) => {
     }
 };
 
-// Upload Logo
+// Upload Logo (Base64 for Serverless)
 exports.uploadLogo = async (req, res) => {
     try {
         if (!req.file) {
@@ -53,39 +46,38 @@ exports.uploadLogo = async (req, res) => {
         let settings = await Settings.findOne();
         if (!settings) settings = new Settings();
 
-        // Delete old logo if exists
-        if (settings.logoPath) {
-            const oldPath = path.join(__dirname, '..', settings.logoPath);
-            if (fs.existsSync(oldPath)) {
-                fs.unlinkSync(oldPath);
-            }
-        }
+        // Convert buffer to base64
+        const fileBase64 = req.file.buffer.toString('base64');
+        const fileMimeType = req.file.mimetype;
 
-        // Save relative path using forward slashes for cross-platform compatibility
-        settings.logoPath = path.relative(path.join(__dirname, '..'), req.file.path).split(path.sep).join('/');
+        settings.logoBase64 = fileBase64;
+        settings.logoMimeType = fileMimeType;
+        settings.logoPath = ''; // clear legacy path
+
         await settings.save();
 
-        res.json({ logoPath: settings.logoPath });
+        res.json({ success: true });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to upload logo' });
     }
 };
 
-// Serve Logo
+// Serve Logo from DB
 exports.getLogo = async (req, res) => {
     try {
         let settings = await Settings.findOne();
-        if (!settings || !settings.logoPath) {
+        // Fallback or check legacy path if needed (skipping legacy path for now as Vercel effectively deleted it)
+        if (!settings || !settings.logoBase64) {
             return res.status(404).send('Logo not found');
         }
-        const filePath = path.join(__dirname, '..', settings.logoPath);
-        if (fs.existsSync(filePath)) {
-            res.sendFile(filePath);
-        } else {
-            res.status(404).send('Logo file missing');
-        }
+
+        const imgBuffer = Buffer.from(settings.logoBase64, 'base64');
+        res.setHeader('Content-Type', settings.logoMimeType || 'image/png');
+        res.send(imgBuffer);
+
     } catch (error) {
+        console.error(error);
         res.status(500).send('Error serving logo');
     }
 };
