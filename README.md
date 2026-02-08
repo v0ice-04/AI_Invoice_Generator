@@ -56,3 +56,4 @@ A MERN stack application that generates professional invoices from natural langu
 3. Click generate.
 4. Review and download PDF.
 "# AI_Invoice_Generator" 
+"# ai_invoice_genrator" 
