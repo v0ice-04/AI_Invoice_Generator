@@ -32,21 +32,13 @@ app.use(express.json());
 // Serve uploaded logos statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes
-app.get('/', (req, res) => {
-  res.send('AI Invoice Generator Backend is Running!');
-});
-app.use('/api/invoice', invoiceRoutes);
-app.use('/api/settings', settingsRoutes); // Added
-
 // Database Connection optimized for Serverless
 let cachedConnection = null;
 
 const connectDB = async () => {
-  if (cachedConnection) return cachedConnection;
+  if (cachedConnection && mongoose.connection.readyState === 1) return cachedConnection;
 
   try {
-    const PORT = process.env.PORT || 5000;
     let MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ai-invoice-app';
 
     if (process.env.DB_PASSWORD) {
@@ -54,11 +46,7 @@ const connectDB = async () => {
       MONGO_URI = MONGO_URI.replace('<db_password>', encodeURIComponent(process.env.DB_PASSWORD));
       if (MONGO_URI !== originalUri) {
         console.log('✅ Found DB_PASSWORD and replaced placeholder in URI');
-      } else {
-        console.warn('⚠️ Found DB_PASSWORD but could not find <db_password> placeholder in URI');
       }
-    } else {
-      console.warn('⚠️ DB_PASSWORD environment variable is MISSING');
     }
 
     const conn = await mongoose.connect(MONGO_URI, {
@@ -84,6 +72,13 @@ app.use(async (req, res, next) => {
     res.status(500).json({ error: 'Database connection failed' });
   }
 });
+
+// Routes
+app.get('/', (req, res) => {
+  res.send('AI Invoice Generator Backend is Running!');
+});
+app.use('/api/invoice', invoiceRoutes);
+app.use('/api/settings', settingsRoutes);
 
 if (require.main === module) {
   const PORT = process.env.PORT || 5000;
