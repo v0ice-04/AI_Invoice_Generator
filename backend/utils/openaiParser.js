@@ -24,6 +24,8 @@ const parsePrompt = async (prompt) => {
       Extract the following fields from the user's invoice request and return them as a JSON object.
       Do not include any markdown formatting (like \`\`\`json). Just return the raw JSON string.
 
+      CURRENT DATE: ${new Date().toISOString().split('T')[0]}
+
       Fields to extract:
       - clientName (string): The name of the client or company.
       - serviceDescription (string): A brief description of the service provided.

@@ -44,7 +44,12 @@ const Home = () => {
             setInvoice(result);
         } catch (err) {
             console.error(err);
-            setError(t('error'));
+            if (err.response?.data?.error === 'Company Settings required') {
+                setError('⚠️ Please update your Company Name and Address in Settings first.');
+                setIsSettingsOpen(true);
+            } else {
+                setError(t('error'));
+            }
         } finally {
             setLoading(false);
         }
@@ -112,8 +117,8 @@ const Home = () => {
                         <button
                             onClick={() => setActiveTab('generate')}
                             className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'generate'
-                                    ? 'bg-blue-600 text-white shadow-md'
-                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                ? 'bg-blue-600 text-white shadow-md'
+                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
                                 }`}
                         >
                             {t('generateButton')}
@@ -121,8 +126,8 @@ const Home = () => {
                         <button
                             onClick={() => setActiveTab('history')}
                             className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'history'
-                                    ? 'bg-blue-600 text-white shadow-md'
-                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                ? 'bg-blue-600 text-white shadow-md'
+                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
                                 }`}
                         >
                             {t('historyTitle')}

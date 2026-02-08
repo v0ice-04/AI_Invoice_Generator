@@ -18,9 +18,15 @@ exports.generateInvoice = async (req, res) => {
 
         console.log('Step 2: Fetching Settings...');
         let settings = await Settings.findOne();
-        if (!settings) {
-            settings = new Settings();
-            await settings.save();
+
+        // Validation: Ensure user has configured their own company details
+        if (!settings ||
+            settings.companyName === 'My Company Name' ||
+            settings.companyAddress === '123 Business St, Tech City') {
+            return res.status(400).json({
+                error: 'Company Settings required',
+                message: 'Please update your Company Name and Address in Settings first.'
+            });
         }
 
         const safeNextNum = typeof settings.nextInvoiceNumber === 'number' ? settings.nextInvoiceNumber : 1;
