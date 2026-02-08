@@ -7,6 +7,7 @@ const invoiceRoutes = require('./routes/invoiceRoutes');
 const settingsRoutes = require('./routes/settingsRoutes'); // Added
 
 dotenv.config();
+mongoose.set('bufferCommands', false); // Global protection
 
 const app = express();
 
@@ -49,11 +50,16 @@ const connectDB = async () => {
     let MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ai-invoice-app';
 
     if (process.env.DB_PASSWORD) {
+      const originalUri = MONGO_URI;
       MONGO_URI = MONGO_URI.replace('<db_password>', encodeURIComponent(process.env.DB_PASSWORD));
+      if (MONGO_URI !== originalUri) {
+        console.log('✅ Found DB_PASSWORD and replaced placeholder in URI');
+      } else {
+        console.warn('⚠️ Found DB_PASSWORD but could not find <db_password> placeholder in URI');
+      }
+    } else {
+      console.warn('⚠️ DB_PASSWORD environment variable is MISSING');
     }
-
-    // Disable buffering - fail fast instead of hanging
-    mongoose.set('bufferCommands', false);
 
     const conn = await mongoose.connect(MONGO_URI, {
       serverSelectionTimeoutMS: 5000,

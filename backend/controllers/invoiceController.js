@@ -7,6 +7,8 @@ const supabase = require('../utils/supabase');
 exports.generateInvoice = async (req, res) => {
     try {
         console.log('--- Starting Invoice Generation ---');
+        console.log('Database ReadyState:', require('mongoose').connection.readyState);
+
         const { prompt, clientAddress, paymentMethod } = req.body;
         if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
 

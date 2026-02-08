@@ -9,6 +9,6 @@ const settingsSchema = new mongoose.Schema({
     logoMimeType: { type: String, default: '' },
     nextInvoiceNumber: { type: Number, default: 1 }, // For auto-increment
     prefix: { type: String, default: 'INV-' }
-});
+}, { bufferCommands: false });
 
 module.exports = mongoose.model('Settings', settingsSchema);

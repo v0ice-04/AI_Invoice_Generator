@@ -12,6 +12,6 @@ const invoiceSchema = new mongoose.Schema({
     dueDate: Date,
     paymentMethod: { type: String, enum: ['Cash', 'Net Banking', 'UPI', 'Cheque'], default: 'Net Banking' }, // Added
     createdAt: { type: Date, default: Date.now },
-});
+}, { bufferCommands: false });
 
 module.exports = mongoose.model('Invoice', invoiceSchema);
