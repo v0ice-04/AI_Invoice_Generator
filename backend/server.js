@@ -11,8 +11,17 @@ dotenv.config();
 const app = express();
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+// URL Cleanup Middleware (Prevention for Preflight Redirects)
+app.use((req, res, next) => {
+  if (req.url.includes('//')) {
+    req.url = req.url.replace(/\/\/+/g, '/');
+  }
+  next();
+});
+
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin: [FRONTEND_URL, 'https://ai-invoice-generator-w4vi.vercel.app'], // Include production domain
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
