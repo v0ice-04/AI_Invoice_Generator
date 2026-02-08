@@ -55,3 +55,4 @@ A MERN stack application that generates professional invoices from natural langu
    > "Generate an invoice for consulting services for Acme Corp, amount $1200, tax 10%."
 3. Click generate.
 4. Review and download PDF.
+"# AI_Invoice_Generator" 
